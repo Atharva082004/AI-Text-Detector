@@ -133,7 +133,7 @@ Or use Live Server extension in VS Code
 
 ## 📁 Project Structure
 
-AiDetector/
+```AiDetector/
 ├── .git/                      # Git version control
 ├── node_modules/              # Dependencies (gitignored)
 │
@@ -151,7 +151,7 @@ AiDetector/
 ├── proxy-server.js            # Backend server
 ├── README.md                  # Project documentation
 └── LICENSE                    # MIT License
-
+```
 ## 🙏 Acknowledgments
 
 - IBM Watson Machine Learning team for AutoAI platform
