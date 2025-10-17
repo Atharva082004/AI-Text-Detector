@@ -149,8 +149,7 @@ Or use Live Server extension in VS Code
 ├── package.json               # Dependencies & scripts
 ├── package-lock.json          # Dependency lock
 ├── proxy-server.js            # Backend server
-├── README.md                  # Project documentation
-└── LICENSE                    # MIT License
+└── README.md                  # Project documentation
 ```
 ## 🙏 Acknowledgments
 
