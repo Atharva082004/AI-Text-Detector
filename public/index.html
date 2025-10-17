@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Text Detector | BE Project</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #FFFFFF;
+            --bg-secondary: #FAFAFA;
+            --bg-tertiary: #F5F5F5;
+            --text-primary: #000000;
+            --text-secondary: #525252;
+            --border-color: #000000;
+            --border-secondary: #D4D4D4;
+            --accent: #000000;
+            --neon-cyan: #00FFFF;
+            --neon-pink: #FF00FF;
+            --neon-green: #00FF00;
+            --neon-blue: #0080FF;
+        }
+
+        body.dark-mode {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #151515;
+            --bg-tertiary: #1a1a1a;
+            --text-primary: #FFFFFF;
+            --text-secondary: #A3A3A3;
+            --border-color: #FFFFFF;
+            --border-secondary: #404040;
+            --accent: #00FFFF;
+        }
+
+        body {
+            font-family: 'Space Grotesk', -apple-system, system-ui, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        body.dark-mode {
+            background: radial-gradient(ellipse at top, rgba(0, 255, 255, 0.05) 0%, transparent 50%),
+                        radial-gradient(ellipse at bottom, rgba(255, 0, 255, 0.05) 0%, transparent 50%),
+                        #0a0a0a;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+            width: 100%;
+        }
+
+        /* Header */
+        header {
+            border-bottom: 2px solid var(--border-color);
+            padding: 0.7rem 0;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        /* body.dark-mode header {
+            border-bottom: 2px solid var(--neon-cyan);
+            box-shadow: 0 2px 20px rgba(0, 255, 255, 0.3);
+        } */
+
+        h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+        }
+
+        body.dark-mode h1 {
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5),
+                         0 0 40px rgba(0, 255, 255, 0.3);
+        }
+
+        .subtitle {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: clamp(0.875rem, 2vw, 1rem);
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+            font-weight: 400;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 2rem;
+            right: 0;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            padding: 0.75rem 1.25rem;
+            cursor: pointer;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 2px 2px 0 var(--border-color);
+        }
+
+        body.dark-mode .theme-toggle {
+            background: var(--bg-tertiary);
+            border-color: var(--neon-cyan);
+            color: var(--text-primary);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+
+        body.dark-mode .theme-toggle:hover {
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.5), 2px 2px 0 var(--neon-cyan);
+        }
+
+        /* Main Content Layout - Split Screen */
+        main {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        main.split-view {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        /* Input Panel */
+        .input-panel {
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: left center;
+        }
+
+        main.split-view .input-panel {
+            max-width: none;
+            margin: 0;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        body.dark-mode label {
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 1.25rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            border: 2px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            resize: vertical;
+            transition: all 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            box-shadow: 4px 4px 0 var(--border-color);
+            transform: translate(-2px, -2px);
+        }
+
+        body.dark-mode textarea {
+            background: var(--bg-tertiary);
+            border-color: var(--neon-cyan);
+        }
+
+        body.dark-mode textarea:focus {
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.4), 4px 4px 0 var(--neon-cyan);
+            border-color: var(--neon-pink);
+        }
+
+        textarea::placeholder {
+            color: var(--text-secondary);
+        }
+
+        /* Sample Section */
+        .sample-section {
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            border: 2px solid var(--border-secondary);
+            background: var(--bg-tertiary);
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode .sample-section {
+            border-color: rgba(0, 255, 255, 0.3);
+            background: var(--bg-secondary);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+        }
+
+        .sample-header {
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+        }
+
+        .sample-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .sample-btn {
+            padding: 0.75rem 1rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 500;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .sample-btn:hover {
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            transform: translate(-2px, -2px);
+            box-shadow: 2px 2px 0 var(--border-color);
+        }
+
+        body.dark-mode .sample-btn {
+            border-color: rgba(0, 255, 255, 0.5);
+        }
+
+        body.dark-mode .sample-btn:hover {
+            background: var(--neon-cyan);
+            color: #000000;
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.6), 2px 2px 0 var(--neon-cyan);
+        }
+
+        /* Analyze Button */
+        .btn-analyze {
+            width: 100%;
+            padding: 1.25rem 2rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 0.5rem;
+        }
+
+        .btn-analyze:hover:not(:disabled) {
+            transform: translate(-4px, -4px);
+            box-shadow: 4px 4px 0 var(--border-color);
+        }
+
+        body.dark-mode .btn-analyze {
+            background: var(--neon-cyan);
+            color: #000000;
+            border-color: var(--neon-cyan);
+        }
+
+        body.dark-mode .btn-analyze:hover:not(:disabled) {
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.6),
+                        0 0 60px rgba(0, 255, 255, 0.3),
+                        4px 4px 0 var(--neon-cyan);
+        }
+
+        .btn-analyze:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Loading State */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-secondary);
+            border-top-color: var(--text-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        body.dark-mode .loading-spinner {
+            border-color: rgba(0, 255, 255, 0.2);
+            border-top-color: var(--neon-cyan);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Results Panel */
+        .results-panel {
+            display: none;
+            opacity: 0;
+            transform: translateX(50px);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .results-panel.active {
+            display: block;
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .results {
+            padding: 2rem;
+            border: 2px solid var(--border-color);
+            background: var(--bg-tertiary);
+            height: 100%;
+            position: sticky;
+            top: 2rem;
+        }
+
+        body.dark-mode .results {
+            border-color: var(--neon-pink);
+            background: var(--bg-secondary);
+            box-shadow: 0 0 40px rgba(255, 0, 255, 0.2);
+        }
+
+        .result-header {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        body.dark-mode .result-header {
+            text-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+        }
+
+        .result-main {
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        body.dark-mode .result-main {
+            background: var(--bg-tertiary);
+            border-color: var(--neon-green);
+            box-shadow: 0 0 25px rgba(0, 255, 0, 0.15);
+        }
+
+        .classification {
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 700;
+            margin-bottom: 1rem;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        body.dark-mode .classification.ai {
+            color: var(--neon-pink);
+            text-shadow: 0 0 20px rgba(255, 0, 255, 0.6),
+                         0 0 40px rgba(255, 0, 255, 0.3);
+        }
+
+        body.dark-mode .classification.human {
+            color: var(--neon-green);
+            text-shadow: 0 0 20px rgba(0, 255, 0, 0.6),
+                         0 0 40px rgba(0, 255, 0, 0.3);
+        }
+
+        .probability {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0.5rem 0;
+        }
+
+        body.dark-mode .probability {
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+
+        .confidence {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            padding: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode .stat-card {
+            background: var(--bg-tertiary);
+            border-color: rgba(0, 255, 255, 0.4);
+        }
+
+        body.dark-mode .stat-card:hover {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        body.dark-mode .stat-value {
+            color: var(--neon-cyan);
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        /* Error Message */
+        .error {
+            display: none;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 1.25rem;
+            margin-top: 1rem;
+            border: 2px solid var(--border-color);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .error.active {
+            display: block;
+        }
+
+        body.dark-mode .error {
+            background: #1a0000;
+            border-color: #ff0000;
+            color: #ff0000;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.3);
+        }
+
+        /* Footer */
+        footer {
+            margin-top: auto;
+            padding: 2rem 0;
+            border-top: 2px solid var(--border-color);
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        body.dark-mode footer {
+            border-top: 2px solid rgba(0, 255, 255, 0.3);
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            main.split-view {
+                grid-template-columns: 1fr;
+            }
+
+            .results-panel {
+                transform: translateY(50px);
+            }
+
+            .results-panel.active {
+                transform: translateY(0);
+            }
+
+            .results {
+                position: static;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .theme-toggle {
+                position: static;
+                display: block;
+                width: 100%;
+                margin-bottom: 1rem;
+            }
+
+            textarea {
+                min-height: 200px;
+            }
+
+            .sample-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <button class="theme-toggle" onclick="toggleTheme()">
+                <span id="themeIcon">🌙 Dark Mode</span>
+            </button>
+            <h1>AI Text Detector</h1>
+            <p class="subtitle">// Watson ML-powered content analysis system</p>
+        </header>
+
+        <main id="mainContent">
+            <!-- Input Panel -->
+            <div class="input-panel">
+                <div>
+                    <label for="textInput">Enter Text to Analyze</label>
+                    <textarea 
+                        id="textInput" 
+                        placeholder="Paste or type your text here for AI detection analysis..."
+                        rows="10"
+                    ></textarea>
+                </div>
+
+                <!-- Sample Texts Section -->
+                <div class="sample-section">
+                    <div class="sample-header">Try Sample Texts</div>
+                    <div class="sample-buttons">
+                        <button class="sample-btn" onclick="loadSampleText('ai1')">
+                            AI Sample - Technical
+                        </button>
+                        <button class="sample-btn" onclick="loadSampleText('ai2')">
+                            AI Sample - Creative
+                        </button>
+                        <button class="sample-btn" onclick="loadSampleText('human1')">
+                            Human Sample - Essay
+                        </button>
+                        <button class="sample-btn" onclick="loadSampleText('human2')">
+                            Human Sample - Story
+                        </button>
+                    </div>
+                </div>
+
+                <button class="btn-analyze" id="analyzeBtn" onclick="analyzeText()">
+                    Analyze Text
+                </button>
+
+                <div class="loading" id="loadingState">
+                    <div class="loading-spinner"></div>
+                    <p>Analyzing text with Watson ML...</p>
+                </div>
+
+                <div class="error" id="errorMessage"></div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="results-panel" id="resultsPanel">
+                <div class="results">
+                    <h2 class="result-header">Analysis Results</h2>
+                    
+                    <div class="result-main">
+                        <div class="classification" id="classification"></div>
+                        <div class="probability" id="probability"></div>
+                        <div class="confidence" id="confidence"></div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Text Length</div>
+                            <div class="stat-value" id="textLength"></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Word Count</div>
+                            <div class="stat-value" id="wordCount"></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Confidence</div>
+                            <div class="stat-value" id="confidenceScore"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>AI Text Detection System | Bachelor of Engineering ML Mini-Project 2025</p>
+        </footer>
+    </div>
+
+    <script>
+        const API_KEY = null;
+        const PROXY_URL = 'http://localhost:3001';
+
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.getElementById('themeIcon');
+            
+            body.classList.toggle('dark-mode');
+            
+            if (body.classList.contains('dark-mode')) {
+                themeIcon.textContent = '☀️ Light Mode';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                themeIcon.textContent = '🌙 Dark Mode';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                document.getElementById('themeIcon').textContent = '☀️ Light Mode';
+            }
+        });
+
+        const sampleTexts = {
+            ai1: `Artificial intelligence has revolutionized numerous industries through its capacity to process vast amounts of data and identify patterns that would be imperceptible to human observation. Machine learning algorithms utilize sophisticated mathematical models to optimize decision-making processes, thereby enhancing operational efficiency across diverse sectors. The implementation of neural networks has facilitated unprecedented advances in natural language processing, computer vision, and predictive analytics. These technological innovations continue to reshape the landscape of modern computing, enabling organizations to derive actionable insights from complex datasets and automate previously manual workflows with remarkable accuracy and speed.`,
+            
+            ai2: `The integration of artificial intelligence into creative processes represents a paradigm shift in how we conceptualize artistic expression. Generative models can now produce coherent narratives, compose musical arrangements, and generate visual artwork that demonstrates aesthetic sophistication. This technological evolution raises profound questions about the nature of creativity itself and challenges traditional notions of authorship. As these systems become increasingly sophisticated, they demonstrate the potential to augment human creative capabilities rather than simply replace them, opening new avenues for collaborative innovation between human artists and computational systems.`,
+            
+            human1: `I've been thinking a lot about my childhood lately. There's this one memory that keeps coming back to me - it was a summer afternoon when I was maybe seven or eight years old. My dad and I were trying to fix this old bike he'd found at a garage sale. We had no idea what we were doing, honestly. The chain kept slipping off, and we couldn't figure out why. But you know what? I remember laughing so hard that day. We were covered in grease, frustrated as hell, but we just kept at it. Eventually, we got that stupid bike working, and I rode it until the wheels fell off. Now that I'm older, I realize those moments - the messy, imperfect ones - those are what really matter.`,
+            
+            human2: `Last Tuesday was weird. Like, really weird. I woke up late (as usual), and my coffee maker decided to die on me. Great start to the day, right? So I'm rushing out the door, no caffeine in my system, and I realize I forgot my phone. Had to go back. By the time I actually left, I was twenty minutes late for my meeting. But here's the thing - when I finally got there, nobody else had shown up either. Turns out the meeting had been canceled the day before, and I just... never checked my email. Sometimes I wonder how I even function as an adult. Probably don't, honestly.`
+        };
+
+        function loadSampleText(sampleId) {
+            const text = sampleTexts[sampleId];
+            document.getElementById('textInput').value = text;
+            hideError();
+            hideResults();
+        }
+
+        async function analyzeText() {
+            const text = document.getElementById('textInput').value.trim();
+            
+            if (!text) {
+                showError('Please enter some text to analyze');
+                return;
+            }
+
+            if (text.length < 50) {
+                showError('Text is too short. Please enter at least 50 characters.');
+                return;
+            }
+
+            hideError();
+            hideResults();
+            showLoading();
+            disableButton();
+
+            try {
+                const tokenResponse = await fetch(`${PROXY_URL}/api/token`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+
+                if (!tokenResponse.ok) {
+                    throw new Error('Failed to authenticate');
+                }
+
+                const tokenData = await tokenResponse.json();
+                const token = tokenData.access_token;
+
+                const analyzeResponse = await fetch(`${PROXY_URL}/api/predict`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token, text })
+                });
+
+                if (!analyzeResponse.ok) {
+                    throw new Error('Analysis failed');
+                }
+
+                const result = await analyzeResponse.json();
+                displayResults(result);
+
+            } catch (error) {
+                showError(`Analysis failed: ${error.message}`);
+            } finally {
+                hideLoading();
+                enableButton();
+            }
+        }
+
+        function displayResults(data) {
+            const overall = data.overall;
+            const textInfo = data.textInfo;
+
+            const classElement = document.getElementById('classification');
+            classElement.textContent = overall.classification;
+            classElement.className = `classification ${overall.isAI ? 'ai' : 'human'}`;
+
+            document.getElementById('probability').textContent = 
+                `${(overall.aiProbability * 100).toFixed(1)}% AI Probability`;
+            
+            document.getElementById('confidence').textContent = 
+                `Confidence: ${(overall.confidence * 100).toFixed(1)}%`;
+
+            document.getElementById('textLength').textContent = `${textInfo.originalLength}`;
+            document.getElementById('wordCount').textContent = `${textInfo.wordCount}`;
+            document.getElementById('confidenceScore').textContent = 
+                `${(overall.confidence * 100).toFixed(1)}%`;
+
+            showResults();
+        }
+
+        function showLoading() {
+            document.getElementById('loadingState').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingState').classList.remove('active');
+        }
+
+        function showResults() {
+            // Enable split view on wider screens
+            const mainContent = document.getElementById('mainContent');
+            const resultsPanel = document.getElementById('resultsPanel');
+            
+            if (window.innerWidth > 1200) {
+                mainContent.classList.add('split-view');
+            }
+            
+            // Small delay for smooth animation
+            setTimeout(() => {
+                resultsPanel.classList.add('active');
+            }, 100);
+        }
+
+        function hideResults() {
+            const mainContent = document.getElementById('mainContent');
+            const resultsPanel = document.getElementById('resultsPanel');
+            
+            resultsPanel.classList.remove('active');
+            mainContent.classList.remove('split-view');
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.classList.add('active');
+        }
+
+        function hideError() {
+            document.getElementById('errorMessage').classList.remove('active');
+        }
+
+        function disableButton() {
+            document.getElementById('analyzeBtn').disabled = true;
+        }
+
+        function enableButton() {
+            document.getElementById('analyzeBtn').disabled = false;
+        }
+
+        document.getElementById('textInput').addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                analyzeText();
+            }
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            const mainContent = document.getElementById('mainContent');
+            const resultsPanel = document.getElementById('resultsPanel');
+            
+            if (resultsPanel.classList.contains('active')) {
+                if (window.innerWidth > 1200) {
+                    mainContent.classList.add('split-view');
+                } else {
+                    mainContent.classList.remove('split-view');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
