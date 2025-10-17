@@ -57,19 +57,28 @@ This Bachelor of Engineering project addresses the critical challenge of disting
 ### Setup
 
 1. **Clone the repository**
+```
 git clone https://github.com/yourusername/ai-text-detection.git
 cd ai-text-detection
+```
 2. **Install dependencies**
+```
 npm install
+```
 3. **Configure environment variables**
 Copy example env file
+```
 cp .env.example .env
-
+```
 Edit .env with your credentials
+```
 IBM_API_KEY=your_watson_api_key_here
 WATSON_ML_URL=your_watson_ml_endpoint
+```
 4. **Start the server**
+```
 node proxy-server.js
+```
 5. **Open the application**
 Open index.html in your browser
 Or use Live Server extension in VS Code
